@@ -1,5 +1,5 @@
-import re
 import matplotlib.pyplot as plt
+import pandas as pd
 import numpy as np
 
 
@@ -15,55 +15,83 @@ class WordInfo(object):
         return f'(number of occurrences: {self.number_of_occurrences}, rank: {self.rank})'
 
 
-def text_stats(text):
-    res = re.findall(r'[a-zA-Z0-9_\(\)\|]+', text)
+def text_stats(words):
     words_occurrences = dict()
-    all_words = len(res)
-    for word_ in res:
-        if word_ in words_occurrences:
-            words_occurrences[word_] = words_occurrences[word_] + 1
+    number_of_words = len(words)
+    for word_index in range(number_of_words):
+        word = words[word_index]
+        if words[word_index] in words_occurrences:
+            words_occurrences[word] = words_occurrences[word] + 1
         else:
-            words_occurrences[word_] = 1
+            words_occurrences[word] = 1
 
-    return {k: v for k, v in sorted(words_occurrences.items(), key=lambda item: item[1], reverse=True)}, all_words
+    return {k: v for k, v in sorted(words_occurrences.items(), key=lambda item: item[1], reverse=True)}, number_of_words
 
 
-def zipfs_law(fileName):
-    with open(fileName, 'r') as file:
-        data = file.read().replace('\n', ' ')
-
-    stats, all_words = text_stats(data)
-
-    print(stats)
-
-    sorted_words = list(stats.keys())
-
+def convert_map_to_word_info_map(words_map):
+    sorted_words = list(words_map.keys())
     result = dict()
-
     rank = 1
-    result[sorted_words[0]] = WordInfo(stats[sorted_words[0]], rank)
+    result[sorted_words[0]] = WordInfo(words_map[sorted_words[0]], rank)
     for i in range(1, len(sorted_words)):
-        if result[sorted_words[i - 1]].number_of_occurrences != stats[sorted_words[i]]:
+        if result[sorted_words[i - 1]].number_of_occurrences != words_map[sorted_words[i]]:
             rank += 1
-        result[sorted_words[i]] = WordInfo(stats[sorted_words[i]], rank)
+        result[sorted_words[i]] = WordInfo(words_map[sorted_words[i]], rank)
 
-    x = list()
-    y = list()
-
-    for k in result:
-        x.append(result[k].rank)
-        y.append(result[k].number_of_occurrences)
-        print(
-            f'{result[k].number_of_occurrences}, {all_words}, {result[k].rank}, {result[k].number_of_occurrences / all_words * result[k].rank * 100}')
-
-    plt.scatter(x, y)
-    plt.xlim(0, 150)
-    plt.ylim(0, 150)
-    plt.gca().set_aspect('equal', adjustable='box')
+    return result
 
 
-zipfs_law('../../resources/voynich.txt')
+def create_array_from_map(words_info_map, number_of_all_words):
+    data = list()
+    for word in words_info_map:
+        word_info = words_info_map[word]
+        row = [word, word_info.number_of_occurrences, word_info.rank, word_info.number_of_occurrences /
+               number_of_all_words * 100, word_info.rank * (word_info.number_of_occurrences /
+                                                            number_of_all_words * 100)]
+        data.append(row)
 
-zipfs_law('../../resources/spanish_wiki.txt')
+    return data
 
-plt.show()
+
+def pandas_text_stats(words_map, number_of_all_words):
+    words_info_map = convert_map_to_word_info_map(words_map)
+    array_from_map = create_array_from_map(words_info_map, number_of_all_words)
+
+    return pd.DataFrame(array_from_map, columns=['word', 'number_of_occurrences', 'rank', 'frequency', 'rxf'])
+
+
+def create_zipf_table(pandas_map: pd.DataFrame):
+    pandas_map.to_csv('voinich_table.csv', index=False)
+
+
+def plot_bar(df):
+    word_info = df['word'] + ',' + df['number_of_occurrences'].astype(str) + ',' + df['rank'].astype(str) \
+                + ',' + df['frequency'].astype(str)
+    word_frequency = df['rxf']
+
+    n = df.shape[0]
+
+    fig, ax = plt.subplots(figsize=(10, n // 10))
+
+    plt.yticks(fontsize=4)
+
+    ax.barh(word_info, word_frequency, align='center', color='green', ecolor='black')
+    ax.set_yticks(word_info)
+    ax.set_yticklabels([str(x) for x in word_info])
+    ax.set_xlabel('r x f')
+    ax.set_ylim(0, n)
+
+    plt.savefig("bar.png", dpi=150)
+
+
+def plot_rxf(df):
+    df_without_duplicates = df.drop_duplicates(subset=['rank'], keep='first')
+    r = np.log10(df_without_duplicates['rank'])
+    f = np.log10(df_without_duplicates['frequency'])
+
+    plt.scatter(r, f)
+    plt.xlabel('log(rank)')
+    plt.ylabel('log(frequency)')
+    plt.title('r x f')
+
+    plt.savefig("rxf.png", dpi=150)
