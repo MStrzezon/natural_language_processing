@@ -10,13 +10,13 @@ def main():
     words_occurrences, number_of_words = text_stats(words)
     df = pandas_text_stats(words_occurrences, number_of_words)
     print('Start creating zipf table...')
-    create_zipf_table(df)
+    create_zipf_table(df, 'voynich')
     print('Zipf table is saved')
     print('Start plotting rxf...')
-    plot_rxf(df)
+    plot_rxf(df, 'voynich')
     print('Plotting rxf is finished')
     print('Start plotting bar plot...')
-    plot_bar(df)
+    plot_bar(df, 'voynich')
     print('Plotting bar plot is finished')
 
 

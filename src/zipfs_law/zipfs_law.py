@@ -60,11 +60,12 @@ def pandas_text_stats(words_map, number_of_all_words):
     return pd.DataFrame(array_from_map, columns=['word', 'number_of_occurrences', 'rank', 'frequency', 'rxf'])
 
 
-def create_zipf_table(pandas_map: pd.DataFrame):
-    pandas_map.to_csv('voinich_table.csv', index=False)
+def create_zipf_table(pandas_map: pd.DataFrame, text_name):
+    file_name = '../../resources/' + text_name + '_table.csv'
+    pandas_map.to_csv(file_name, index=False)
 
 
-def plot_bar(df):
+def plot_bar(df, text_name):
     word_info = df['word'] + ',' + df['number_of_occurrences'].astype(str) + ',' + df['rank'].astype(str) \
                 + ',' + df['frequency'].astype(str)
     word_frequency = df['rxf']
@@ -81,10 +82,12 @@ def plot_bar(df):
     ax.set_xlabel('r x f')
     ax.set_ylim(0, n)
 
-    plt.savefig("bar.png", dpi=150)
+    file_name = '../../resources/bar_' + text_name + '.png'
+
+    plt.savefig(file_name, dpi=150)
 
 
-def plot_rxf(df):
+def plot_rxf(df, text_name):
     df_without_duplicates = df.drop_duplicates(subset=['rank'], keep='first')
     r = np.log10(df_without_duplicates['rank'])
     f = np.log10(df_without_duplicates['frequency'])
@@ -94,4 +97,6 @@ def plot_rxf(df):
     plt.ylabel('log(frequency)')
     plt.title('r x f')
 
-    plt.savefig("rxf.png", dpi=150)
+    file_name = '../../resources/rxf_' + text_name + '.png'
+
+    plt.savefig(file_name, dpi=150)
