@@ -66,8 +66,10 @@ def create_zipf_table(pandas_map: pd.DataFrame, text_name):
 
 
 def plot_bar(df, text_name):
+    df = df.head(50)
     word_info = df['word'] + ',' + df['number_of_occurrences'].astype(str) + ',' + df['rank'].astype(str) \
                 + ',' + df['frequency'].astype(str)
+    word_info = word_info.head(50)
     word_frequency = df['rxf']
 
     n = df.shape[0]
@@ -81,8 +83,12 @@ def plot_bar(df, text_name):
     ax.set_yticklabels([str(x) for x in word_info])
     ax.set_xlabel('r x f')
     ax.set_ylim(0, n)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
 
-    file_name = '../../resources/bar_' + text_name + '.png'
+    file_name = '../../resources/bar50_' + text_name + '.png'
 
     plt.savefig(file_name, dpi=150)
 
